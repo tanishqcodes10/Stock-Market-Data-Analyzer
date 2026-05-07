@@ -1,0 +1,53 @@
+
+╔══════════════════════════════════════════════════════════════════╗
+║           STOCK MARKET DATA ANALYZER — ARCHITECTURE             ║
+╠══════════════════════════════════════════════════════════════════╣
+║                                                                  ║
+║  INPUT LAYER                                                     ║
+║  ┌──────────────────────────────────────────────────────┐       ║
+║  │  • Ticker Symbol (e.g., AAPL, TSLA, INFY)            │       ║
+║  │  • Date Range   (start_date → end_date)               │       ║
+║  │  • CSV File     (fallback when API unavailable)       │       ║
+║  └──────────────────────────────────────────────────────┘       ║
+║                          │                                       ║
+║                          ▼                                       ║
+║  DATA COLLECTION (src/data_fetcher.py)                           ║
+║  ┌──────────────────────────────────────────────────────┐       ║
+║  │  yfinance.download() → pandas DataFrame              │       ║
+║  │  Fallback: pd.read_csv()                             │       ║
+║  │  Columns: date, open, high, low, close, volume       │       ║
+║  └──────────────────────────────────────────────────────┘       ║
+║                          │                                       ║
+║                          ▼                                       ║
+║  DATA CLEANING (src/data_cleaner.py)                             ║
+║  ┌──────────────────────────────────────────────────────┐       ║
+║  │  • Drop NaN close rows                               │       ║
+║  │  • Forward-fill gaps (holidays/weekends)             │       ║
+║  │  • Sort by date ascending                            │       ║
+║  │  • Remove duplicate dates                            │       ║
+║  │  • Enforce correct dtypes                            │       ║
+║  └──────────────────────────────────────────────────────┘       ║
+║                          │                                       ║
+║                          ▼                                       ║
+║  ANALYSIS ENGINE (src/analysis.py)                               ║
+║  ┌────────────────────────────────────────────────────────┐     ║
+║  │  calculate_daily_returns()   → daily_return column     │     ║
+║  │  calculate_moving_averages() → SMA_20, SMA_50 columns  │     ║
+║  │  calculate_volatility()      → annualised σ (float)    │     ║
+║  │  get_high_low_summary()      → dict of KPIs            │     ║
+║  └────────────────────────────────────────────────────────┘     ║
+║                          │                                       ║
+║            ┌─────────────┴─────────────┐                        ║
+║            ▼                           ▼                        ║
+║  VISUALIZER (src/visualizer.py)    REPORTER (src/report_gen.py) ║
+║  ┌────────────────────┐             ┌──────────────────────┐    ║
+║  │ closing_price.png  │             │ summary_YYYYMMDD.txt  │    ║
+║  │ moving_avgs.png    │             │ data_YYYYMMDD.csv     │    ║
+║  │ daily_returns.png  │             └──────────────────────┘    ║
+║  │ return_dist.png    │                                          ║
+║  │ volatility.png     │                                          ║
+║  └────────────────────┘                                          ║
+║                                                                  ║
+║  OPTIONAL: streamlit_app.py  (interactive dashboard)             ║
+║                                                                  ║
+╚══════════════════════════════════════════════════════════════════╝
