@@ -1,47 +1,40 @@
 # src/data_fetcher.py
 
 import appdirs as ad
-ad.user_cache_dir = lambda *args: "/tmp"   # Fix for Streamlit Cloud
+from pathlib import Path
+
+# Fix Streamlit Cloud cache dir
+CACHE_DIR = ".cache"
+ad.user_cache_dir = lambda *args: CACHE_DIR
+Path(CACHE_DIR).mkdir(exist_ok=True)
 
 import yfinance as yf
 import pandas as pd
+from curl_cffi import requests as curl_requests
 
 
 def fetch_stock_data(ticker: str, start: str, end: str) -> pd.DataFrame:
     try:
-        # multi_level_index=False → flat columns, no MultiIndex
-        df = yf.download(
-            ticker,
-            start=start,
-            end=end,
-            auto_adjust=True,
-            progress=False,
-            multi_level_index=False
-        )
+        # Use curl_cffi session to impersonate Chrome — bypasses Yahoo rate limit
+        session = curl_requests.Session(impersonate="chrome")
+
+        tk = yf.Ticker(ticker, session=session)
+        df = tk.history(start=start, end=end, auto_adjust=True)
 
         if df is None or df.empty:
             return None
 
-        # Lowercase all column names
+        # Flatten and lowercase columns
         df.columns = [col.lower().strip() for col in df.columns]
 
-        # Reset index so Date becomes a column
+        # Reset index — Date becomes a column
         df.reset_index(inplace=True)
+        df.rename(columns={"date": "date", "Date": "date"}, inplace=True)
+        df["date"] = pd.to_datetime(df["date"]).dt.tz_localize(None)
 
-        # Rename 'date' column reliably
-        df.rename(
-            columns={"index": "date", "Date": "date", "datetime": "date"},
-            inplace=True
-        )
-
-        # Ensure date column is datetime
-        df["date"] = pd.to_datetime(df["date"])
-
-        # Keep only needed columns — drop extras like 'capital gains'
+        # Keep only OHLCV
         keep = ["date", "open", "high", "low", "close", "volume"]
         df = df[[c for c in keep if c in df.columns]]
-
-        # Drop rows where close is NaN
         df.dropna(subset=["close"], inplace=True)
 
         return df
