@@ -197,16 +197,12 @@ After completing this project, you will understand:
 
 ---
 
-## 🤝 Contributing
 
-Pull requests are welcome. For major changes, open an issue first.
+## 👤 Author
 
----
+ Tanishq Jakate
+🔗 [LinkedIn](linkedin.com/in/tanishq-jakate-93617a402) |
+    [GitHub](https://github.com/tanishqcodes10)
 
-## 📄 License
-
-MIT License — free for personal and educational use.
-
----
 
 > **⚠️ Final Disclaimer:** This project is strictly for **learning and demonstration purposes**. Past stock performance does not predict future results. This is **NOT financial advice**.
